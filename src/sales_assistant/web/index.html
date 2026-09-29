@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Помощник менеджера · amoCRM</title>
+  <style>
+    :root { color-scheme: light; --ink:#16213b; --muted:#62718c; --line:#dce3ef; --blue:#405cf5; --surface:#fff; }
+    * { box-sizing:border-box; } body { margin:0; background:#f4f7fb; color:var(--ink); font:15px/1.5 system-ui,-apple-system,sans-serif; }
+    header { display:flex; justify-content:space-between; gap:20px; align-items:center; padding:21px 28px; background:#fff; border-bottom:1px solid var(--line); }
+    h1 { margin:0; font-size:22px; letter-spacing:-.02em; } h2 { font-size:18px; margin:0 0 14px; } h3 { font-size:14px; margin:0 0 7px; }
+    .subtitle { color:var(--muted); margin:4px 0 0; font-size:13px; }
+    .status { color:#226650; background:#e8f7f0; border-radius:999px; padding:7px 12px; font-size:12px; font-weight:700; }
+    main { display:grid; grid-template-columns:280px minmax(300px,1fr) minmax(340px,1.12fr); gap:18px; max-width:1600px; margin:24px auto; padding:0 22px; align-items:start; }
+    .card { background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:0 12px 34px #26345108; }
+    .intro { color:var(--muted); font-size:13px; margin:0 0 18px; }
+    .inbox-list { display:grid; gap:8px; max-height:65vh; overflow:auto; }
+    .inbox-item { width:100%; text-align:left; background:#f6f8fc; border:1px solid transparent; border-radius:10px; padding:11px; color:var(--ink); cursor:pointer; }
+    .inbox-item:hover,.inbox-item.active { border-color:#9eabff; background:#f0f2ff; }
+    .inbox-item small { color:var(--muted); display:block; margin-top:4px; }
+    textarea,input { width:100%; padding:12px; border:1px solid #cbd5e5; border-radius:10px; font:inherit; color:var(--ink); background:#fff; }
+    textarea { min-height:180px; resize:vertical; } label { display:block; font-weight:700; margin-bottom:7px; }
+    .key { margin-top:20px; } .key input { font-size:13px; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:13px; }
+    button { font:inherit; cursor:pointer; } .primary { background:var(--blue); color:white; border:1px solid var(--blue); border-radius:9px; padding:10px 15px; font-weight:700; }
+    .secondary { background:white; color:var(--ink); border:1px solid #cbd5e5; border-radius:9px; padding:10px 13px; }
+    .block { border-radius:12px; padding:16px; margin-top:12px; background:#f1f4fb; white-space:pre-wrap; }
+    .block.manager { background:#eaf7f0; } .block p { margin:0; }
+    .evidence { margin-top:19px; border-top:1px solid var(--line); padding-top:16px; }
+    .evidence-item { border-bottom:1px solid var(--line); padding:9px 0; font-size:13px; }
+    .evidence-item small { display:block; color:var(--muted); }
+    .evidence-item a { color:#304fc7; } .muted { color:var(--muted); }
+    .error { color:#ae2442; } .banner { font-size:12px; padding:10px 12px; border-radius:9px; background:#fff5dd; color:#75520b; margin-top:15px; }
+    .metadata { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; font-size:12px; color:var(--muted); }
+    .metadata span { background:#edf1f7; border-radius:999px; padding:4px 9px; }
+    .knowledge { grid-column:1/-1; }
+    .kb-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+    .kb-toolbar input { max-width:320px; margin-left:auto; }
+    .kb-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(290px,1fr)); gap:10px; }
+    .kb-record { border:1px solid var(--line); border-radius:11px; padding:12px 14px; background:#fafbfe; overflow-wrap:anywhere; }
+    .kb-record summary { cursor:pointer; font-weight:700; }
+    .kb-record p { margin:10px 0 0; white-space:pre-wrap; }
+    .kb-record small { color:var(--muted); display:block; margin-top:6px; }
+    .kb-record a { color:#304fc7; }
+    .kb-record h3 { font-size:16px; margin:7px 0; }
+    .kb-record .value { font-size:17px; font-weight:700; color:#233a75; }
+    .kb-record .label { display:inline-block; padding:3px 8px; border-radius:7px; background:#eaf0ff; color:#344ca6; font-size:12px; font-weight:700; }
+    .kb-record .caution { color:#9a5d12; }
+    .kb-record details { margin-top:10px; color:var(--muted); font-size:12px; }
+    .kb-help { background:#f2f5ff; border-radius:10px; padding:11px 13px; margin:0 0 15px; font-size:13px; color:#41517a; }
+    .conversation { margin-top:18px; border-top:1px solid var(--line); padding-top:14px; }
+    .conversation-entry { border-left:3px solid #bcc7e4; padding:7px 10px; margin:8px 0; background:#f8faff; font-size:13px; }
+    .conversation-entry small { display:block; color:var(--muted); }
+    @media(max-width:1100px){main{grid-template-columns:240px 1fr}.results{grid-column:1/-1}}
+    @media(max-width:700px){header{padding:16px}main{display:block;padding:0 12px;margin:12px auto}.card{margin-bottom:12px}}
+  </style>
+</head>
+<body>
+  <header><div><h1>Помощник менеджера</h1><p class="subtitle">BM25 по базе знаний · черновик ответа · обоснованная допродажа</p></div><span class="status" id="health">Подключение…</span></header>
+  <main>
+    <section class="card"><h2>Входящие</h2><p class="intro">Сообщения из вебхука amoCRM или локального демо.</p><div class="inbox-list" id="inbox"></div><div class="key"><label for="api-key">Ключ панели, если задан</label><input id="api-key" type="password" autocomplete="off" placeholder="APP_API_KEY"></div></section>
+    <section class="card"><h2>Обращение клиента</h2><p class="intro">Учебная база: товары, цены и условия вымышлены. Сообщения одной беседы помогают понять короткие продолжения вроде «А доставка?».</p><label for="message">Текст обращения</label><textarea id="message">Здравствуйте! Нужны 5 ноутбуков для офиса. Есть ли они в наличии, какая гарантия и доставка по Москве?</textarea><label for="conversation-id" style="margin-top:12px">Код демонстрационной беседы</label><input id="conversation-id" maxlength="100"><p class="intro" style="margin:5px 0">Оставьте тот же код для продолжения разговора или начните новую беседу.</p><div class="actions"><button class="primary" id="analyze">Подготовить ответ</button><button class="secondary" id="demo">Создать демо-сообщение</button><button class="secondary" id="new-conversation">Новая беседа</button></div><p id="notice" class="muted" role="status"></p><div class="conversation" id="conversation"><p class="muted">Выберите входящее сообщение, чтобы увидеть всю беседу и статус обработки.</p></div></section>
+    <section class="card results"><h2>Подсказка менеджеру</h2><p class="intro">Два рабочих блока. Ответ клиенту всегда остаётся черновиком.</p><div id="result"><p class="muted">Выберите входящее сообщение или подготовьте ответ.</p></div></section>
+    <section class="card knowledge"><h2>Что знает помощник</h2><p class="intro">Все сведения берутся из учебной базы SQLite. Здесь можно проверить текст, значение и источник каждого условия.</p><div class="kb-toolbar"><button class="secondary" data-kb="documents">Документы</button><button class="secondary" data-kb="facts">Факты</button><button class="secondary" data-kb="aliases">Названия товаров</button><button class="secondary" data-kb="rules">Допродажи</button><button class="secondary" id="reload-kb">Обновить</button><input id="kb-search" type="search" placeholder="Поиск по товарам и условиям"></div><div class="kb-help" id="kb-help"></div><p id="kb-count" class="muted"></p><div class="kb-list" id="kb-list"></div></section>
+  </main>
+  <script>
+    const byId = id => document.getElementById(id);
+    const keyField = byId('api-key');
+    if (['127.0.0.1','localhost','::1'].includes(location.hostname)) document.querySelector('.key').hidden=true;
+    keyField.value = sessionStorage.getItem('assistant-api-key') || '';
+    keyField.addEventListener('change', () => { sessionStorage.setItem('assistant-api-key', keyField.value); loadInbox(); });
+    let selectedId = null, selectedTalkId = null, displayedMessageId = null, lastNewestId = null;
+    const statusNames={queued:'В очереди',processing:'Обрабатывается',ready:'Готово',published:'Добавлено в amoCRM',needs_attention:'Нужна проверка'};
+    const conversationField=byId('conversation-id');
+    conversationField.value=sessionStorage.getItem('demo-conversation-id') || ('demo-'+crypto.randomUUID());
+    sessionStorage.setItem('demo-conversation-id',conversationField.value);
+    conversationField.addEventListener('change',()=>sessionStorage.setItem('demo-conversation-id',conversationField.value));
+    byId('new-conversation').onclick=()=>{conversationField.value='demo-'+crypto.randomUUID();sessionStorage.setItem('demo-conversation-id',conversationField.value);selectedId=null;selectedTalkId=null;displayedMessageId=null;byId('conversation').textContent='Новая беседа начата. Отправьте сообщение через демо-очередь.';};
+    async function api(path, options={}) {
+      const headers = {'Content-Type':'application/json', ...(options.headers||{})};
+      if (keyField.value) headers.Authorization = 'Bearer ' + keyField.value;
+      const response = await fetch(path, {...options, headers});
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || 'Ошибка запроса');
+      return data;
+    }
+    function setNotice(text, bad=false) { const el=byId('notice'); el.textContent=text; el.className=bad?'error':'muted'; }
+    function block(title, text, extraClass='') {
+      const box=document.createElement('div'); box.className='block '+extraClass;
+      const heading=document.createElement('h3'); heading.textContent=title;
+      const paragraph=document.createElement('p'); paragraph.textContent=text;
+      box.append(heading,paragraph); return box;
+    }
+    function render(suggestion) {
+      const root=byId('result'); root.replaceChildren();
+      const customer=block('Ответ клиенту · черновик',suggestion.customer_reply);
+      const copy=document.createElement('button'); copy.className='secondary'; copy.style.marginTop='12px'; copy.textContent='Копировать ответ';
+      copy.onclick=async()=>{await navigator.clipboard.writeText(suggestion.customer_reply);copy.textContent='Скопировано';};
+      customer.appendChild(copy); root.appendChild(customer);
+      root.appendChild(block('Внутренняя подсказка',suggestion.manager_tip,'manager'));
+      const meta=document.createElement('div');meta.className='metadata';
+      const stage={offer:'потребность обнаружена',clarify:'нужно уточнить потребность',none:'без допродажи'}[suggestion.recommendation_stage]||'';
+      const modeName=suggestion.mode.includes('aitunnel')?'AITUNNEL + BM25':'Поиск BM25 + правила';
+      const selectedName=productName(suggestion.selected_product);
+      for (const text of [modeName, suggestion.selected_product?selectedName:'товар не определён', stage, suggestion.needs_review?'проверить перед отправкой':'']) {
+        if (text) {const span=document.createElement('span');span.textContent=text;meta.appendChild(span);}
+      }
+      root.appendChild(meta);
+      if (suggestion.notice) {const banner=document.createElement('div');banner.className='banner';banner.textContent=suggestion.notice;root.appendChild(banner);}
+      if(suggestion.analysis){const detail=document.createElement('details');detail.className='kb-record';detail.style.marginTop='14px';const summary=document.createElement('summary');summary.textContent='Как AI понял обращение';detail.appendChild(summary);
+        const a=suggestion.analysis;const intentNames={sales:'Вопрос о покупке',complaint:'Жалоба',return:'Возврат',health:'Вопрос о здоровье'};
+        for(const [label,value] of [['Тип обращения',intentNames[a.intent]||a.intent],['Товар',a.product_id?productName(a.product_id):'Не определён'],['Что спрашивает клиент',(a.categories||[]).map(x=>categoryNames[x]||x).join(', ')||'Нужно уточнить'],['Сценарий допродажи',a.rule_id||'Не выбран'],['Фраза клиента',a.need_quote||'Не указана'],['Предположение AI',a.need_summary||'Нет'],['Уточнённый запрос для поиска',a.search_query||'Нет']]){addText(detail,'small',label+': '+value);}root.appendChild(detail);}
+      const evidence=document.createElement('div');evidence.className='evidence';
+      const title=document.createElement('h3');title.textContent='На чём основан ответ';evidence.appendChild(title);
+      for (const item of suggestion.evidence) {
+        const row=document.createElement('div');row.className='evidence-item';
+        const label=document.createElement('strong');label.textContent=item.title;row.appendChild(label);
+        const source=document.createElement('small');source.textContent='Проверено '+item.reviewed_at+' · '+(item.source.startsWith('demo://')?'учебный источник':item.source);row.appendChild(source);
+        if (/^https:\/\//.test(item.source)) {const link=document.createElement('a');link.href=item.source;link.target='_blank';link.rel='noopener noreferrer';link.textContent='Открыть источник';row.appendChild(link);}
+        evidence.appendChild(row);
+      }
+      if (!suggestion.evidence.length) {const empty=document.createElement('p');empty.className='muted';empty.textContent='Подтверждённых фактов не найдено.';evidence.appendChild(empty);}
+      if (suggestion.manager_evidence?.length) {
+        const label=document.createElement('h3');label.textContent='Основание подсказки';label.style.marginTop='16px';evidence.appendChild(label);
+        for (const item of suggestion.manager_evidence) {
+          const row=document.createElement('div');row.className='evidence-item';row.textContent=item.title; evidence.appendChild(row);
+        }
+      }
+      const searchDetail=document.createElement('details');searchDetail.style.marginTop='16px';addText(searchDetail,'summary','Какие документы нашёл поиск BM25');
+      addText(searchDetail,'small','Порядок показывает релевантность. В ответ включаются только подходящие факты из найденных документов.');
+      for (const [number,item] of (suggestion.retrieval_hits||[]).entries()) {const row=document.createElement('div');row.className='evidence-item';row.textContent=(number+1)+'. '+item.title;const score=document.createElement('small');score.textContent='Техническая оценка поиска: '+item.bm25;row.appendChild(score);searchDetail.appendChild(row);}evidence.appendChild(searchDetail);
+      root.appendChild(evidence);
+    }
+    async function loadInbox() {
+      try {
+        const items=await api('/api/inbox'); const list=byId('inbox');list.replaceChildren();
+        const newest=items[0];
+        if(newest && (!selectedId || (lastNewestId && lastNewestId!==newest.id))){
+          selectedId=newest.id;selectedTalkId=newest.talk_id;displayedMessageId=null;
+          byId('message').value=newest.customer_text;
+          byId('result').textContent='Подготавливаю ответ и подсказку для нового обращения…';
+          loadConversation(newest.id);
+        }
+        lastNewestId=newest?.id||null;
+        if (!items.length) {const p=document.createElement('p');p.className='muted';p.textContent='Пока нет сообщений.';list.appendChild(p);}
+        for (const item of items) {
+          const button=document.createElement('button');button.className='inbox-item'+(item.id===selectedId?' active':'');
+          button.textContent=item.customer_text.slice(0,110);
+          const statusName=statusNames[item.status]||item.status;
+          const small=document.createElement('small');small.textContent=(item.lead_id?'Сделка #'+item.lead_id:'Демо')+' · '+statusName;button.appendChild(small);
+          button.onclick=async()=>{selectedId=item.id;selectedTalkId=item.talk_id;byId('message').value=item.customer_text;if(item.suggestion){render(item.suggestion);displayedMessageId=item.id;}else{displayedMessageId=null;byId('result').textContent='Подготавливаю ответ и подсказку для этого обращения…';}await loadConversation(item.id);loadInbox();};
+          list.appendChild(button);
+          if(item.id===selectedId && item.suggestion && displayedMessageId!==item.id){render(item.suggestion);displayedMessageId=item.id;loadConversation(item.id);}
+        }
+      } catch (error) {setNotice(String(error.message||error),true);}
+    }
+    async function loadConversation(id) {
+      try {const items=await api('/api/inbox/'+encodeURIComponent(id)+'/conversation');const box=byId('conversation');box.replaceChildren();
+        const title=document.createElement('h3');title.textContent='Беседа · '+items.length+' сообщений';box.appendChild(title);
+        for (const item of items) {const entry=document.createElement('div');entry.className='conversation-entry';entry.textContent=item.customer_text;
+          const meta=document.createElement('small');const date=new Date(item.received_at);meta.textContent=(statusNames[item.status]||item.status)+' · '+date.toLocaleString('ru-RU')+(item.note_id?' · заметка в amoCRM #'+item.note_id:'');entry.appendChild(meta);
+          const details=document.createElement('details');addText(details,'summary','Детали обработки');addText(details,'small','ID сообщения: '+item.id);addText(details,'small','ID беседы: '+item.talk_id);if(item.error)addText(details,'small','Ошибка: '+item.error);entry.appendChild(details);box.appendChild(entry);}
+      } catch(error) {setNotice(String(error.message||error),true);}
+    }
+    byId('analyze').onclick=async()=>{setNotice('Ищу подтверждённые факты…');try{render(await api('/api/suggest',{method:'POST',body:JSON.stringify({message:byId('message').value,conversation_id:selectedTalkId||conversationField.value})}));setNotice('Черновик готов. Проверьте его перед отправкой.');}catch(error){setNotice(String(error.message||error),true);}};
+    byId('demo').onclick=async()=>{setNotice('Ставлю сообщение в очередь…');try{const item=await api('/api/demo-message',{method:'POST',body:JSON.stringify({message:byId('message').value,conversation_id:conversationField.value})});selectedId=item.id;selectedTalkId=conversationField.value;displayedMessageId=null;setTimeout(()=>{loadInbox();loadConversation(item.id);},600);setNotice('Сообщение принято. Статус и результат появятся во «Входящих».');}catch(error){setNotice(String(error.message||error),true);}};
+    let kbData=null,kbTab='documents';
+    const categoryNames={price:'Цена',stock:'Остаток',warranty:'Гарантия',ports:'Разъёмы',size:'Диагональ',payment:'Оплата',corporate:'Корпоративный заказ',delivery_moscow:'Доставка по Москве',delivery_russia:'Доставка по России',return:'Возврат'};
+    const helpText={documents:'Документ — описание товара или условия. По этим текстам помощник ищет подходящие сведения с помощью BM25.',facts:'Факт — точное значение, которое можно использовать в ответе: цена, гарантия, срок и другие условия. Смотрите, какие сведения требуют повторной проверки.',aliases:'Разные слова, которыми клиент может назвать один товар. Они помогают распознать товар в обращении.',rules:'Сценарии возможной допродажи. Указаны основной товар, дополнение, причина и вопрос для менеджера. Предложение остаётся на усмотрение менеджера.'};
+    function productName(id){return kbData?.documents.find(item=>item.product_id===id)?.title||id||'Общее условие';}
+    function addText(parent,tag,value,className=''){const el=document.createElement(tag);el.textContent=value;el.className=className;parent.appendChild(el);return el;}
+    function technical(card,fields){const details=document.createElement('details');addText(details,'summary','Технические данные');for(const [name,value] of Object.entries(fields))addText(details,'small',name+': '+String(value??'—'));card.appendChild(details);}
+    function documentCard(row){const card=document.createElement('article');card.className='kb-record';
+      addText(card,'span',row.kind==='product'?'Товар':'Условие заказа','label');addText(card,'h3',row.title);addText(card,'p',row.body);
+      addText(card,'small','Проверено: '+row.reviewed_at);addText(card,'small','Источник: '+(row.source.startsWith('demo://')?'учебные данные':row.source));
+      if(/^https:\/\//.test(row.source)){const link=addText(card,'a','Открыть источник');link.href=row.source;link.target='_blank';link.rel='noopener noreferrer';}
+      technical(card,{ID:row.id,'Ссылка на источник':row.source});return card;}
+    function factCard(row){const card=document.createElement('article');card.className='kb-record';const doc=kbData.documents.find(item=>item.id===row.document_id);
+      addText(card,'span',categoryNames[row.category]||row.category,'label');addText(card,'h3',row.product_id?productName(row.product_id):(doc?.title||'Общее условие'));
+      addText(card,'p',row.value,'value');addText(card,'small',row.volatile?'Перед ответом клиенту проверьте актуальность':'Справочное условие',row.volatile?'caution':'');
+      addText(card,'small','Документ: '+(doc?.title||row.document_id));if(doc)addText(card,'small','Проверено: '+doc.reviewed_at);
+      technical(card,{ID:row.id,'Код категории':row.category,'ID документа':row.document_id});return card;}
+    function aliasCard(row){const card=document.createElement('article');card.className='kb-record';addText(card,'span','Названия товара','label');addText(card,'h3',productName(row.product_id));
+      addText(card,'p',row.aliases.map(alias=>'«'+alias+'»').join(', '));addText(card,'small','Любое из этих названий указывает на один товар.');technical(card,{'Код товара':row.product_id});return card;}
+    function ruleCard(row){const card=document.createElement('article');card.className='kb-record';addText(card,'span',row.active?'Действует':'Выключено','label');
+      addText(card,'h3',productName(row.product_id)+' → '+productName(kbData.documents.find(item=>item.id===row.add_on_id)?.product_id));
+      addText(card,'p','Почему: '+row.reason);addText(card,'p','Вопрос менеджера: «'+row.question+'»');
+      addText(card,'small','Слова для локального режима: '+row.trigger_terms.split(',').join(', '));
+      addText(card,'small','При включённом AITUNNEL потребность может быть распознана и без этих слов.');
+      technical(card,{ID:row.id,Приоритет:row.priority,'ID дополнения':row.add_on_id});return card;}
+    async function loadKnowledge(){try{kbData=await api('/api/knowledge');renderKnowledge();}catch(error){byId('kb-count').textContent=String(error.message||error);}}
+    function renderKnowledge(){if(!kbData)return;let rows=kbData[kbTab]||[];
+      if(kbTab==='aliases'){const groups=new Map();for(const item of rows){if(!groups.has(item.product_id))groups.set(item.product_id,[]);groups.get(item.product_id).push(item.alias);}rows=[...groups].map(([product_id,aliases])=>({product_id,aliases}));}
+      const filter=byId('kb-search').value.toLocaleLowerCase('ru');const visible=rows.filter(row=>JSON.stringify(row).toLocaleLowerCase('ru').includes(filter));const list=byId('kb-list');list.replaceChildren();
+      byId('kb-help').textContent=helpText[kbTab];byId('kb-count').textContent='Показано '+visible.length+' из '+rows.length;
+      document.querySelectorAll('[data-kb]').forEach(button=>{button.className=button.dataset.kb===kbTab?'primary':'secondary';});
+      const renderer={documents:documentCard,facts:factCard,aliases:aliasCard,rules:ruleCard}[kbTab];for(const row of visible)list.appendChild(renderer(row));
+      if(!visible.length)addText(list,'p','Ничего не найдено. Попробуйте другой запрос.','muted');
+    }
+    document.querySelectorAll('[data-kb]').forEach(button=>button.onclick=()=>{kbTab=button.dataset.kb;renderKnowledge();});
+    byId('kb-search').addEventListener('input',renderKnowledge);byId('reload-kb').onclick=loadKnowledge;
+    fetch('/health').then(r=>r.json()).then(data=>{byId('health').textContent=data.documents+' документов · '+(data.llm_configured?'AITUNNEL включён':'локальные правила');}).catch(()=>{byId('health').textContent='Сервис недоступен';});
+    loadInbox();loadKnowledge();setInterval(loadInbox,5000);
+  </script>
+</body>
+</html>

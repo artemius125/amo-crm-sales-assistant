@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Тестовый клиент · онлайн-чат</title>
+  <style>
+    body {margin:0; font:16px/1.5 system-ui,sans-serif; background:#f1f5fb; color:#172b49}
+    main {max-width:680px; margin:9vh auto; padding:36px; background:white; border-radius:20px; box-shadow:0 12px 40px #253e6717}
+    h1 {margin:0 0 12px; font-size:30px}
+    p {margin:0 0 18px}
+    button {border:0; border-radius:10px; background:#3775e6; color:white; padding:13px 20px; font:600 16px system-ui; cursor:pointer}
+    .hint {margin-top:20px; color:#536781; font-size:14px}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Тестовый магазин</h1>
+    <p>Нажмите синюю кнопку чата справа и напишите обычный вопрос, как клиент.</p>
+    <button id="new-client" type="button">Новый диалог в отдельном окне</button>
+    <p class="hint">Каждое новое окно представляет другого клиента. Его обращение создаёт отдельную беседу в amoCRM.</p>
+  </main>
+  <script>
+    const url = new URL(location.href);
+    let clientId = url.searchParams.get('client');
+    if (!clientId) {
+      clientId = crypto.randomUUID();
+      url.searchParams.set('client', clientId);
+      history.replaceState(null, '', url);
+    }
+    window.amoSocialButtonConfig = {onlinechat: {user_id: clientId}};
+    document.getElementById('new-client').addEventListener('click', () => {
+      const next = new URL(location.href);
+      next.searchParams.set('client', crypto.randomUUID());
+      window.open(next.href, '_blank', 'width=1150,height=850');
+    });
+  </script>
+  <script>
+    (function(a){
+      a.amo_social_button={id:__AMO_WIDGET_ID__,hash:__AMO_WIDGET_HASH__,locale:'ru',inline:false,
+        setMeta:function(p){this.params=(this.params||[]).concat([p])}};
+      a.amoSocialButton=a.amoSocialButton||function(){
+        (a.amoSocialButton.q=a.amoSocialButton.q||[]).push(arguments)};
+      var s=a.document.createElement('script');s.async=true;s.id='amo_social_button_script';
+      s.src='https://gso.amocrm.ru/js/button.js';a.document.head.appendChild(s);
+    })(window);
+  </script>
+</body>
+</html>

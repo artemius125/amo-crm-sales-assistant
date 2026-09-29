@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+config.toml
+*.session
+*.sqlite3
+*.egg-info/
+.data/
+build/
+dist/
+*.log
+__pycache__/
+.venv/
+browser-profile/
+screenshots/private/
